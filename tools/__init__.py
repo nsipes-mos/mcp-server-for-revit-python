@@ -4,6 +4,8 @@
 
 def register_tools(mcp_server, revit_get_func, revit_post_func, revit_image_func):
     """Register all tools with the MCP server"""
+    from .registration import ReviewedTools
+    mcp_server = ReviewedTools(mcp_server)
     # Import all tool modules
     from .status_tools import register_status_tools
     from .view_tools import register_view_tools

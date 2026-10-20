@@ -1,0 +1,102 @@
+{
+  "mcp_manifest_version": "1.0",
+  "app_model": "A",
+  "mcp_spec_version": "2025-11-25",
+  "server": {
+    "name": "Revit MCP Server",
+    "transport": "stdio"
+  },
+  "tools": [
+    {
+      "name": "clear_colors",
+      "description": "Removes view color overrides from elements in a category."
+    },
+    {
+      "name": "close_document",
+      "description": "Closes the active Revit document, optionally saving changes."
+    },
+    {
+      "name": "color_splash",
+      "description": "Applies view color overrides to elements grouped by a parameter value."
+    },
+    {
+      "name": "execute_revit_code",
+      "description": "Executes supplied IronPython code in Revit with the Windows user's permissions after review in Revit; code can access model data, files and network services."
+    },
+    {
+      "name": "get_current_view_elements",
+      "description": "Lists elements visible in the active view, with optional level and location information."
+    },
+    {
+      "name": "get_current_view_info",
+      "description": "Reads the active view's properties and settings."
+    },
+    {
+      "name": "get_revit_model_info",
+      "description": "Reads project metadata, element counts, rooms, views, sheets, warnings and linked-model information."
+    },
+    {
+      "name": "get_revit_status",
+      "description": "Reads bridge health and active document availability."
+    },
+    {
+      "name": "get_revit_view",
+      "description": "Exports a named model view as a PNG image."
+    },
+    {
+      "name": "launch_revit",
+      "description": "Starts an installed Revit version, optionally opens a model file, and checks bridge readiness."
+    },
+    {
+      "name": "list_category_parameters",
+      "description": "Lists element parameters and sample values for a category."
+    },
+    {
+      "name": "list_families",
+      "description": "Lists loaded family types with optional name filtering."
+    },
+    {
+      "name": "list_family_categories",
+      "description": "Lists categories of loaded families."
+    },
+    {
+      "name": "list_levels",
+      "description": "Lists model levels and their elevations."
+    },
+    {
+      "name": "list_revit_installations",
+      "description": "Lists installed Revit versions and their executable locations."
+    },
+    {
+      "name": "list_revit_views",
+      "description": "Lists exportable model views grouped by view type."
+    },
+    {
+      "name": "open_document",
+      "description": "Opens a specified Revit document, optionally auditing or detaching it from central."
+    },
+    {
+      "name": "place_family",
+      "description": "Places a loaded family instance at specified coordinates and sets requested properties."
+    },
+    {
+      "name": "save_document",
+      "description": "Saves the active document in place or to a specified new file."
+    },
+    {
+      "name": "sync_with_central",
+      "description": "Synchronizes the active workshared model with central using requested relinquish options."
+    }
+  ],
+  "resources": [],
+  "prompts": [],
+  "external_endpoints": [],
+  "autodesk_apis_used": [
+    "Revit API - Document and project information, levels, rooms, elements and parameters",
+    "Revit API - Views, sheets, ImageExportOptions and view graphic overrides",
+    "Revit API - Family symbols, family instance placement and Transactions",
+    "Revit API - OpenAndActivateDocument, Document.Close, Save, SaveAs and SynchronizeWithCentral",
+    "Revit API - User-supplied IronPython can invoke additional APIs under user review"
+  ],
+  "ai_llm_providers": []
+}

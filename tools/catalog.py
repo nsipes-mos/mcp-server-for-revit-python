@@ -1,0 +1,24 @@
+"""Public descriptions shared by the MCP runtime and Autodesk manifest."""
+
+TOOL_DESCRIPTIONS = {
+    "get_revit_status": "Reads bridge health and active document availability.",
+    "get_revit_model_info": "Reads project metadata, element counts, rooms, views, sheets, warnings and linked-model information.",
+    "list_levels": "Lists model levels and their elevations.",
+    "get_revit_view": "Exports a named model view as a PNG image.",
+    "list_revit_views": "Lists exportable model views grouped by view type.",
+    "get_current_view_info": "Reads the active view's properties and settings.",
+    "get_current_view_elements": "Lists elements visible in the active view, with optional level and location information.",
+    "place_family": "Places a loaded family instance at specified coordinates and sets requested properties.",
+    "list_families": "Lists loaded family types with optional name filtering.",
+    "list_family_categories": "Lists categories of loaded families.",
+    "color_splash": "Applies view color overrides to elements grouped by a parameter value.",
+    "clear_colors": "Removes view color overrides from elements in a category.",
+    "list_category_parameters": "Lists element parameters and sample values for a category.",
+    "execute_revit_code": "Executes supplied IronPython code in Revit with the Windows user's permissions after review in Revit; code can access model data, files and network services.",
+    "list_revit_installations": "Lists installed Revit versions and their executable locations.",
+    "launch_revit": "Starts an installed Revit version, optionally opens a model file, and checks bridge readiness.",
+    "open_document": "Opens a specified Revit document, optionally auditing or detaching it from central.",
+    "close_document": "Closes the active Revit document, optionally saving changes.",
+    "save_document": "Saves the active document in place or to a specified new file.",
+    "sync_with_central": "Synchronizes the active workshared model with central using requested relinquish options.",
+}

@@ -8,8 +8,9 @@ from pyrevit import routes, revit, DB
 from pyrevit.revit.db import ProjectInfo as RevitProjectInfo
 import pyrevit.revit.db.query as q
 import logging
+from .security import authorize_request
 
-from utils import normalize_string, get_element_name
+from .utils import normalize_string, get_element_name
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ def register_model_info_routes(api):
     """Register all model information routes with the API"""
 
     @api.route("/model_info/", methods=["GET"])
-    def get_model_info():
+    def get_model_info(doc, request):
         """
         Get comprehensive information about the current Revit model
 
@@ -30,8 +31,10 @@ def register_model_info_routes(api):
         - Room information with levels
         - Link status
         """
+        denial = authorize_request(request, action=None)
+        if denial is not None:
+            return denial
         try:
-            doc = revit.doc
             if not doc:
                 return routes.make_response(
                     data={"error": "No active Revit document"}, status=503

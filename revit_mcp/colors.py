@@ -7,6 +7,7 @@ Provides tools for color splashing elements based on parameter values
 from pyrevit import routes, DB
 import json
 import logging
+from .security import authorize_request
 import random
 from collections import defaultdict
 from .utils import normalize_string, element_id_value
@@ -1097,6 +1098,9 @@ def register_color_routes(api):
             "custom_colors": ["#FF0000", "#00FF00", "#0000FF"]  // optional
         }
         """
+        denial = authorize_request(request, action='Apply view colors')
+        if denial is not None:
+            return denial
         try:
             data = (
                 json.loads(request.data)
@@ -1135,6 +1139,9 @@ def register_color_routes(api):
             "category_name": "Walls"
         }
         """
+        denial = authorize_request(request, action='Clear view colors')
+        if denial is not None:
+            return denial
         try:
             data = (
                 json.loads(request.data)
@@ -1167,6 +1174,9 @@ def register_color_routes(api):
             "category_name": "Walls"
         }
         """
+        denial = authorize_request(request, action=None)
+        if denial is not None:
+            return denial
         try:
             data = (
                 json.loads(request.data)

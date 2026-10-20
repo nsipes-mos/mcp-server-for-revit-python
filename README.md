@@ -2,12 +2,31 @@
 
 ## A pyRevit-oriented implementation of the Model Context Protocol (MCP) for Autodesk Revit
 
+## Local pairing and Autodesk Marketplace publication
+
+This project is being prepared for Autodesk Marketplace review; it is not yet certified.
+The review candidate retains all 20 tools, including Python execution. See
+[publication requirements and outstanding gates](docs/autodesk-marketplace.md),
+[privacy information](PRIVACY.md), and [security boundaries](SECURITY.md).
+
+After installing the pyRevit extension, choose **MCP > Bridge > Connect** in Revit
+to consent and create an encrypted pairing secret for your Windows user. Choose
+**Disconnect** to revoke it. Requests that change models and Python execution show
+their payload for review in Revit before proceeding. Pairing also permits local
+Revit discovery and launch. Pairing is shared across Revit instances for the same
+Windows user; select the correct Routes port before connecting.
+
+The MCP-to-Revit bridge accepts only loopback hosts. Remote VM/LAN HTTP bridges are
+rejected. Optional HTTP MCP transports require a paired bearer header; `stdio` is
+the recommended publication transport and needs no token in client configuration.
+Do not expose either listener to a network, tunnel or the internet.
+
 ## **How?**
 
 - This minimal implementation leverages the Routes module inside pyRevit to create a bridge between Revit and Large Language Models (LLMs).
 - It provides a straightforward template to get started quickly, letting you prototype and iterate tools to give LLMs access to your Revit models.
 - These tools are designed to be expanded for your specific use cases. You're very welcome to fork the repo and make your own contributions.
-- **Note:** The pyRevit Routes API is currently in draft form and subject to change. It lacks built-in authentication mechanisms, so you'll need to implement your own security measures for production use.
+- **Note:** The pyRevit Routes API is currently in draft form and subject to change. This extension authenticates its own routes using Windows-user pairing. Other pyRevit routes/extensions remain outside this protection; review pyRevit server binding and the security document.
 
 ## **Batteries Included**
 
@@ -88,8 +107,10 @@ They never conflict because they serve different roles, speak different protocol
 | `list_family_categories` | ✅ Implemented | Family & Placement | Get a list of all family categories in the model |
 | `get_current_view_info` | ✅ Implemented | View Information | Get detailed information about the currently active view |
 | `get_current_view_elements` | ✅ Implemented | View Information | Get all elements visible in the current view |
-| `create_point_based_element` | ✅ Implemented | Element Creation | Create point-based elements (doors, windows, furniture) |
+| `create_point_based_element` | 🔄 Pending | Element Creation | Create point-based elements (doors, windows, furniture) |
 | `color_splash` | ✅ Implemented | Visualization | Color elements based on parameter values |
+| `clear_colors` | ✅ Implemented | Visualization | Remove view color overrides |
+| `list_category_parameters` | ✅ Implemented | Visualization | List category parameters and sample values |
 | `execute_revit_code` | ✅ Implemented | Code Execution | Execute IronPython code directly in Revit context |
 | `list_revit_installations` | ✅ Implemented | Launch & Document | Discover all Revit versions installed on the system |
 | `launch_revit` | ✅ Implemented | Launch & Document | Launch Revit, optionally with a file, and poll for readiness |
@@ -153,9 +174,11 @@ pyRevit will start listening on port `http://localhost:48884/`
 
 Once installed, test that the Routes API is working:
 
-1. Open your web browser and go to:
-   ```
-   http://localhost:48884/revit_mcp/status/
+1. Choose **MCP > Bridge > Connect** in Revit, then run this authenticated
+   check from the exact candidate directory (a browser request has no pairing
+   header and is denied):
+   ```bash
+   uv run --frozen python -c "import anyio; from main import revit_get; print(anyio.run(revit_get, '/status/'))"
    ```
 
 2. If successful, you should see a response like:
@@ -194,10 +217,12 @@ The MCP server supports multiple transport modes for different use cases:
 
 **Running with combined transport (recommended for HTTP):**
 ```bash
-uv run --with "mcp[cli]" main.py --combined
+uv run --frozen main.py --combined
 ```
 
-This starts the server on `http://127.0.0.1:8000` with both SSE and streamable-HTTP endpoints available.
+After pairing, this starts the authenticated server on `http://127.0.0.1:8000` with both SSE and streamable-HTTP endpoints available.
+
+The following unpaired requests return HTTP 401. HTTP clients must include the header returned by `revit_mcp.pairing.authorization_headers()`; prefer stdio to avoid copying a secret into client configuration.
 
 **Testing the endpoints:**
 ```bash
@@ -228,8 +253,7 @@ Or for manual installation:
       "command": "uv",
       "args": [
         "run",
-        "--with",
-        "mcp[cli]",
+        "--frozen",
         "mcp",
         "run",
         "/absolute/path/to/main.py"
@@ -239,7 +263,7 @@ Or for manual installation:
 }
 ```
 
-For HTTP transport mode, configure Claude Desktop with:
+For HTTP transport mode, the following URL-only example must also be accompanied by the paired Authorization header in a client that supports it:
 ```json
 {
   "mcpServers": {
@@ -253,7 +277,7 @@ For HTTP transport mode, configure Claude Desktop with:
 ### Connecting to Claude Code
 
 ```bash
-claude mcp add -s user "Revit-Connector" -- uv run --with "mcp[cli]" mcp run /absolute/path/to/main.py
+claude mcp add -s user "Revit-Connector" -- uv run --frozen mcp run /absolute/path/to/main.py
 ```
 
 # Creating Your Own Tools

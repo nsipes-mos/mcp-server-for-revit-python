@@ -6,9 +6,13 @@ Handles direct execution of IronPython code in Revit context.
 from pyrevit import routes, revit, DB
 import json
 import logging
+from .security import authorize_request
 import sys
 import traceback
-from StringIO import StringIO
+try:
+    from io import StringIO
+except ImportError:
+    from StringIO import StringIO
 
 # Standard logger setup
 logger = logging.getLogger(__name__)
@@ -29,6 +33,9 @@ def register_code_execution_routes(api):
             "use_transaction": true   # set false for UI ops like switching the active view
         }
         """
+        denial = authorize_request(request, action='Execute Python code')
+        if denial is not None:
+            return denial
         try:
             # Parse the request data
             data = (

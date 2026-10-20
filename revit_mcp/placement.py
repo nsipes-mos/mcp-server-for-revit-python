@@ -4,11 +4,12 @@ Placement Module for Revit MCP
 Handles family placement and element creation functionality
 """
 
-from utils import get_element_name, find_family_symbol_safely, normalize_string, element_id_value
+from .utils import get_element_name, find_family_symbol_safely, normalize_string, element_id_value
 from pyrevit import routes, revit, DB
 import json
 import traceback
 import logging
+from .security import authorize_request
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,9 @@ def register_placement_routes(api):
             }
         }
         """
+        denial = authorize_request(request, action='Place a family')
+        if denial is not None:
+            return denial
         try:
             if not doc:
                 return routes.make_response(
@@ -316,6 +320,9 @@ def register_placement_routes(api):
         Returns:
             list: [{ 'family_name': str, 'type_name': str, 'category': str, 'is_active': bool }]
         """
+        denial = authorize_request(request, action=None)
+        if denial is not None:
+            return denial
         try:
             if not doc:
                 return routes.make_response(
@@ -378,13 +385,16 @@ def register_placement_routes(api):
             )
 
     @api.route("/list_family_categories/", methods=["GET"])
-    def list_family_categories(doc):
+    def list_family_categories(doc, request):
         """
         Get a list of all family categories in the current Revit model
 
         Returns:
             dict: List of categories with family counts
         """
+        denial = authorize_request(request, action=None)
+        if denial is not None:
+            return denial
         try:
             if not doc:
                 return routes.make_response(
@@ -438,13 +448,16 @@ def register_placement_routes(api):
             )
 
     @api.route("/list_levels/", methods=["GET"])
-    def list_levels(doc):
+    def list_levels(doc, request):
         """
         Get a list of all levels in the current Revit model
 
         Returns:
             dict: List of levels with their elevations
         """
+        denial = authorize_request(request, action=None)
+        if denial is not None:
+            return denial
         try:
             if not doc:
                 return routes.make_response(

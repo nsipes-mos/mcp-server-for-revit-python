@@ -5,7 +5,7 @@
     "rocket_mode_compatible": "True",
     "name": "revit-mcp-python-Moseley",
     "description": "MCP to allow for interaction between Revit, pyRevit and Claude MCP protocol. Uses the pyRevit routes module to handle the communication. This is a fork of the main pyrevit mcp",
-    "author": "Moseley-Nick",
+    "author": "Juan D. Rodriguez / Jean-Marc Couffin copied to Moseley Nick",
     "author_profile": "https://github.com/nsipes-mos",
     "url": "https://github.com/nsipes-mos/mcp-server-for-revit-python",
     "website": "",

@@ -1,0 +1,62 @@
+"""Export/check Autodesk's inventory against the registered FastMCP server."""
+import argparse
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+import anyio
+from mcp.types import LATEST_PROTOCOL_VERSION
+from main import mcp
+
+
+async def build_manifest():
+    tools = await mcp.list_tools()
+    resources = await mcp.list_resources()
+    templates = await mcp.list_resource_templates()
+    prompts = await mcp.list_prompts()
+    return {
+        "mcp_manifest_version": "1.0",
+        "app_model": "A",
+        "mcp_spec_version": LATEST_PROTOCOL_VERSION,
+        "server": {"name": mcp.name, "transport": "stdio"},
+        "tools": [{"name": tool.name, "description": tool.description}
+                  for tool in sorted(tools, key=lambda item: item.name)],
+        "resources": [item.model_dump(mode="json", exclude_none=True)
+                      for item in resources + templates],
+        "prompts": [item.model_dump(mode="json", exclude_none=True)
+                    for item in prompts],
+        # No fixed outbound internet services in the built-in bridge/client.
+        # Supplied Python code can initiate arbitrary external communication:
+        # the declaration draft records this unresolved certification gate.
+        "external_endpoints": [],
+        "autodesk_apis_used": [
+            "Revit API - Document and project information, levels, rooms, elements and parameters",
+            "Revit API - Views, sheets, ImageExportOptions and view graphic overrides",
+            "Revit API - Family symbols, family instance placement and Transactions",
+            "Revit API - OpenAndActivateDocument, Document.Close, Save, SaveAs and SynchronizeWithCentral",
+            "Revit API - User-supplied IronPython can invoke additional APIs under user review",
+        ],
+        "ai_llm_providers": [],
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--check", action="store_true")
+    parser.add_argument("--output", type=Path, default=ROOT / "mcp-tool-manifest.json")
+    args = parser.parse_args()
+    manifest = anyio.run(build_manifest)
+    if args.check:
+        if json.loads(args.output.read_text(encoding="utf-8")) != manifest:
+            raise SystemExit("Manifest does not match the registered MCP inventory.")
+        print("Manifest matches {} tools, {} resources and {} prompts.".format(
+            len(manifest["tools"]), len(manifest["resources"]), len(manifest["prompts"])))
+    else:
+        args.output.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()
