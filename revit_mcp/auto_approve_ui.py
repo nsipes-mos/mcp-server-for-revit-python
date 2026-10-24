@@ -4,7 +4,7 @@ import os
 from .pairing import get_auto_approve, set_auto_approve, get_token, PairingError
 
 IMAGES = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "images")
-TAB_NAME = "MCP"
+TAB_NAME = "PyMoseley"
 AUTO_BUTTONS = {"Auto1Off": "off", "Auto2Safe": "safe", "Auto3All": "all"}
 
 

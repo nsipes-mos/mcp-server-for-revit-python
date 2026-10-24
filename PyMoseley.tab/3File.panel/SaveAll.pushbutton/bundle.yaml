@@ -1,0 +1,2 @@
+title: Save All
+tooltip: Saves every open, modified document. Modified project templates (.rte) get their Template Version parameter set to today's date; the report notes a missing or unusable parameter.
