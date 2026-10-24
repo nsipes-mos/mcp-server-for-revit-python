@@ -1,2 +1,2 @@
 title: All
-tooltip: All skips every prompt, including Python.
+tooltip: Bypasses all prompts. Requires no authorization, including for python.

@@ -1,2 +1,2 @@
 title: Safe
-tooltip: Safe skips the prompt for everything except Python execution and Sync with central.
+tooltip: Skips prompts for everything except Python execution and Sync with Central.
