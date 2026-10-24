@@ -1,0 +1,2 @@
+help_url: https://github.com/nsipes-mos/mcp-server-for-revit-python/blob/main/PRIVACY.md#consent-and-revocation
+tooltip: Disconnects MCP Server from Revit. Auto-Approve resets to Off.

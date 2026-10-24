@@ -10,7 +10,7 @@ FILES = {
     "requirements.txt", "LICENSE", "README.md", "PRIVACY.md", "SECURITY.md",
     "mcp-tool-manifest.json",
 }
-PREFIXES = ("revit_mcp/", "tools/", "MCP.tab/", "images/", "docs/", "scripts/")
+PREFIXES = ("revit_mcp/", "tools/", "PyMoseley.tab/", "images/", "docs/", "scripts/")
 
 
 def main():

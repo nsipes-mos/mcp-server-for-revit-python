@@ -2,12 +2,10 @@
 
 ## A pyRevit-oriented implementation of the Model Context Protocol (MCP) for Autodesk Revit
 
-## Local pairing and Autodesk Marketplace publication
+## Local pairing
 
-This project is being prepared for Autodesk Marketplace review; it is not yet certified.
-The review candidate retains all 20 tools, including Python execution. See
-[publication requirements and outstanding gates](docs/autodesk-marketplace.md),
-[privacy information](PRIVACY.md), and [security boundaries](SECURITY.md).
+This extension requires local Windows-user pairing. See
+[privacy information](PRIVACY.md) and [security boundaries](SECURITY.md).
 
 After installing the pyRevit extension, choose **MCP > Bridge > Connect** in Revit
 to consent and create an encrypted pairing secret for your Windows user. Choose

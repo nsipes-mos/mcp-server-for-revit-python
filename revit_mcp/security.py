@@ -2,7 +2,10 @@
 """Authentication and in-Revit review for bridge requests."""
 import json
 from pyrevit import routes
-from .pairing import validate_request
+from .pairing import validate_request, get_auto_approve
+
+# Still prompted in "safe" auto-approve mode.
+ALWAYS_PROMPT = ("Execute Python code", "Synchronize with central")
 
 
 def authorize_request(request, action=None):
@@ -14,7 +17,8 @@ def authorize_request(request, action=None):
         return routes.make_response(data={"error": "Callbacks are not supported."}, status=400)
     if not validate_request(request.headers):
         return routes.make_response(data={"error": "Bridge is disconnected or pairing is invalid."}, status=401)
-    if action:
+    mode = get_auto_approve() if action else "off"
+    if action and (mode == "off" or (mode == "safe" and action in ALWAYS_PROMPT)):
         from pyrevit import forms
         try:
             data = json.loads(request.data) if isinstance(request.data, str) else request.data

@@ -96,6 +96,51 @@ def test_revit_review_decline_and_accept_show_request(route_security, paired_use
     assert security.authorize_request(request, "Execute Python code").status == 400
 
 
+@pytest.mark.parametrize("mode,action,prompts", [
+    ("off", "Place a family", True),
+    ("off", "Execute Python code", True),
+    ("safe", "Place a family", False),
+    ("safe", "Apply view colors", False),
+    ("safe", "Execute Python code", True),
+    ("safe", "Synchronize with central", True),
+    ("all", "Place a family", False),
+    ("all", "Execute Python code", False),
+    ("all", "Synchronize with central", False),
+])
+def test_auto_approve_modes_control_review_prompt(route_security, paired_user, mode, action, prompts):
+    security, _, alert = route_security
+    pairing.set_auto_approve(mode)
+    request = SimpleNamespace(data={"x": 1}, headers=pairing.authorization_headers())
+    result = security.authorize_request(request, action)
+    assert alert.called is prompts
+    # alert declines by default: a prompt means denial, no prompt means proceed
+    assert (result is not None) is prompts
+
+
+def test_auto_approve_never_skips_pairing(route_security, paired_user):
+    security, _, alert = route_security
+    pairing.set_auto_approve("all")
+    request = SimpleNamespace(data={"x": 1}, headers={})
+    assert security.authorize_request(request, "Execute Python code").status == 401
+    alert.assert_not_called()
+
+
+def test_auto_approve_defaults_off_and_disconnect_resets(paired_user):
+    assert pairing.get_auto_approve() == "off"
+    pairing.set_auto_approve("all")
+    assert pairing.get_auto_approve() == "all"
+    pairing.disable_pairing()
+    assert pairing.get_auto_approve() == "off"
+    with pytest.raises(pairing.PairingError):
+        pairing.set_auto_approve("bogus")
+
+
+def test_corrupt_auto_approve_file_fails_closed(paired_user):
+    pairing.set_auto_approve("all")
+    Path(pairing.auto_approve_path()).write_text("everything")
+    assert pairing.get_auto_approve() == "off"
+
+
 def _route_functions():
     functions = []
     for path in (ROOT / "revit_mcp").glob("*.py"):
