@@ -1,15 +1,47 @@
 # -*- coding: utf-8 -*-
-"""Ribbon helpers for the Auto-Approve tab: gray circle, green when active."""
+"""Ribbon status circles: Auto-Approve mode, and Connect/Disconnect pairing state."""
 import os
-from .pairing import get_auto_approve, set_auto_approve
+from .pairing import get_auto_approve, set_auto_approve, get_token, PairingError
 
-BUTTONS = {"Auto1Off": "off", "Auto2Safe": "safe", "Auto3All": "all"}
 IMAGES = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "images")
+TAB_NAME = "MCP"
+AUTO_BUTTONS = {"Auto1Off": "off", "Auto2Safe": "safe", "Auto3All": "all"}
+
+
+def _image(color):
+    return os.path.join(IMAGES, "auto_{}.png".format(color))
+
+
+def is_paired():
+    try:
+        get_token()
+        return True
+    except PairingError:
+        return False
 
 
 def icon_for(mode):
-    name = "auto_green.png" if get_auto_approve() == mode else "auto_gray.png"
-    return os.path.join(IMAGES, name)
+    return _image("green" if get_auto_approve() == mode else "gray")
+
+
+def connect_icon():
+    """Green while paired."""
+    return _image("green" if is_paired() else "gray")
+
+
+def disconnect_icon():
+    """Red while disconnected."""
+    return _image("gray" if is_paired() else "red")
+
+
+def _icon_for_button(name):
+    if name in AUTO_BUTTONS:
+        return icon_for(AUTO_BUTTONS[name])
+    if name == "Connect":
+        return connect_icon()
+    if name == "Disconnect":
+        return disconnect_icon()
+    return None
 
 
 def _walk(component):
@@ -22,10 +54,12 @@ def _walk(component):
 def refresh_icons():
     from pyrevit.coreutils.ribbon import get_current_ui, ICON_SMALL
     for tab in get_current_ui().get_pyrevit_tabs():
+        if getattr(tab, "name", None) != TAB_NAME:
+            continue
         for component in _walk(tab):
-            mode = BUTTONS.get(getattr(component, "name", None))
-            if mode and hasattr(component, "set_icon"):
-                component.set_icon(icon_for(mode), icon_size=ICON_SMALL)
+            icon = _icon_for_button(getattr(component, "name", None))
+            if icon and hasattr(component, "set_icon"):
+                component.set_icon(icon, icon_size=ICON_SMALL)
 
 
 def select(mode):
