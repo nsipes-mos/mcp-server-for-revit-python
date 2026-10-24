@@ -16,7 +16,9 @@ def is_paired():
     try:
         get_token()
         return True
-    except PairingError:
+    except Exception:
+        # IronPython 2 raises IOError (not an OSError) for a missing file,
+        # and DPAPI failures vary; any failure means not paired.
         return False
 
 
