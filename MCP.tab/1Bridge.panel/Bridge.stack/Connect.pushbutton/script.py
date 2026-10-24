@@ -4,7 +4,7 @@ import os
 import sys
 from pyrevit import forms
 
-extension_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+extension_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 if extension_root not in sys.path:
     sys.path.insert(0, extension_root)
 from revit_mcp.pairing import enable_pairing, PairingError

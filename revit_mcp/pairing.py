@@ -84,6 +84,39 @@ def disable_pairing():
     path = pairing_path()
     if os.path.isfile(path):
         os.remove(path)
+    set_auto_approve("off")
+
+
+AUTO_APPROVE_MODES = ("off", "safe", "all")
+
+
+def auto_approve_path():
+    return os.path.join(os.path.dirname(pairing_path()), "auto_approve")
+
+
+def get_auto_approve():
+    """Return "off", "safe" (all but Python/sync) or "all"; unreadable means "off"."""
+    try:
+        with open(auto_approve_path(), "r") as stream:
+            mode = stream.read().strip()
+    except (OSError, IOError, PairingError):
+        return "off"
+    return mode if mode in AUTO_APPROVE_MODES else "off"
+
+
+def set_auto_approve(mode):
+    if mode not in AUTO_APPROVE_MODES:
+        raise PairingError("Unknown auto-approve mode.")
+    path = auto_approve_path()
+    if mode == "off":
+        if os.path.isfile(path):
+            os.remove(path)
+        return
+    directory = os.path.dirname(path)
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+    with open(path, "w") as stream:
+        stream.write(mode)
 
 
 def get_token():
