@@ -2,7 +2,8 @@
 """Tool registration system for Revit MCP Server"""
 
 
-def register_tools(mcp_server, revit_get_func, revit_post_func, revit_image_func):
+def register_tools(mcp_server, revit_get_func, revit_post_func, revit_image_func,
+                   instances=None):
     """Register all tools with the MCP server"""
     from .registration import ReviewedTools
     mcp_server = ReviewedTools(mcp_server)
@@ -27,3 +28,6 @@ def register_tools(mcp_server, revit_get_func, revit_post_func, revit_image_func
     )
     register_launch_tools(mcp_server, revit_get_func)
     register_document_tools(mcp_server, revit_get_func, revit_post_func)
+    if instances is not None:
+        from .instance_tools import register_instance_tools
+        register_instance_tools(mcp_server, *instances)

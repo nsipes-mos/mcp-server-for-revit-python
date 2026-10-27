@@ -16,6 +16,8 @@ TOOL_DESCRIPTIONS = {
     "list_category_parameters": "Lists element parameters and sample values for a category.",
     "execute_revit_code": "Executes supplied IronPython code in Revit with the Windows user's permissions after review in Revit; code can access model data, files and network services.",
     "list_revit_installations": "Lists installed Revit versions and their executable locations.",
+    "list_revit_instances": "Lists running Revit instances with their version, bridge port, open document and whether MCP calls are routed to them.",
+    "select_revit_instance": "Routes later MCP tool calls to the running Revit of a given version year; changes only this connector's target, not Revit.",
     "launch_revit": "Starts an installed Revit version, optionally opens a model file, and checks bridge readiness.",
     "open_document": "Opens a specified Revit document, optionally auditing or detaching it from central.",
     "close_document": "Closes the active Revit document, optionally saving changes.",

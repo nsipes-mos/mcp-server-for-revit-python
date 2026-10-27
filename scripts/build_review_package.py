@@ -8,7 +8,6 @@ ROOT = Path(__file__).resolve().parents[1]
 FILES = {
     "main.py", "startup.py", "extension.json", "pyproject.toml", "uv.lock",
     "requirements.txt", "LICENSE", "README.md", "PRIVACY.md", "SECURITY.md",
-    "mcp-tool-manifest.json",
 }
 PREFIXES = ("revit_mcp/", "tools/", "PyMoseley.tab/", "images/", "docs/", "scripts/")
 

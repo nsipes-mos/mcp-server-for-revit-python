@@ -111,6 +111,8 @@ They never conflict because they serve different roles, speak different protocol
 | `list_category_parameters` | ✅ Implemented | Visualization | List category parameters and sample values |
 | `execute_revit_code` | ✅ Implemented | Code Execution | Execute IronPython code directly in Revit context |
 | `list_revit_installations` | ✅ Implemented | Launch & Document | Discover all Revit versions installed on the system |
+| `list_revit_instances` | ✅ Implemented | Launch & Document | List running Revit instances (version, port, open document, selected) |
+| `select_revit_instance` | ✅ Implemented | Launch & Document | Route later tool calls to the running Revit of a given version |
 | `launch_revit` | ✅ Implemented | Launch & Document | Launch Revit, optionally with a file, and poll for readiness |
 | `open_document` | ✅ Implemented | Launch & Document | Open a document in running Revit (supports detach and audit) |
 | `close_document` | ✅ Implemented | Launch & Document | Close the active document |
@@ -125,6 +127,8 @@ They never conflict because they serve different roles, speak different protocol
 | `tag_walls` | 🔄 Pending | Annotation | Tag all walls in the current view |
 | `search_modules` | 🔄 Pending | Integration | Search for available modules/addins |
 | `use_module` | 🔄 Pending | Integration | Execute functionality from external modules |
+
+**Running several Revit versions:** each running Revit listens on its own pyRevit Routes port (2026 on 48884 and 2027 on 48885, for example, depending on start order). Set `REVIT_VERSION=2027` in the connector's `env` to target that version by default, or call `select_revit_instance` at runtime. The port is found from the running `Revit.exe` processes, so start order doesn't matter. An explicit `REVIT_PORT` overrides both.
 
 
 ![Claude listing model elements in the Desktop interface](images/list_model_tool.png)
