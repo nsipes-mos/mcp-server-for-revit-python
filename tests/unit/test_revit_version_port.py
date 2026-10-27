@@ -44,8 +44,24 @@ def test_missing_version_lists_running_versions(two_revits, monkeypatch):
         main._base_url()
 
 
-def test_without_version_default_port_is_unchanged(monkeypatch):
+def test_without_version_and_several_running_default_port_is_used(two_revits, monkeypatch):
+    monkeypatch.delenv("REVIT_PORT", raising=False)
     monkeypatch.setattr(main, "_selected_version", "")
+    assert main._base_url() == main.BASE_URL
+
+
+def test_lone_running_revit_is_used_automatically(monkeypatch):
+    monkeypatch.delenv("REVIT_PORT", raising=False)
+    monkeypatch.setattr(main, "_selected_version", "")
+    monkeypatch.setattr(main, "scan_revit_instances",
+                        lambda: [{"version": "2027", "port": 48885, "pid": 1}])
+    assert main._base_url() == "http://127.0.0.1:48885/revit_mcp"
+
+
+def test_no_running_revit_falls_back_to_default_port(monkeypatch):
+    monkeypatch.delenv("REVIT_PORT", raising=False)
+    monkeypatch.setattr(main, "_selected_version", "")
+    monkeypatch.setattr(main, "scan_revit_instances", lambda: [])
     assert main._base_url() == main.BASE_URL
 
 
@@ -61,7 +77,7 @@ def test_select_switches_target_and_default_resets(two_revits, monkeypatch):
     assert main.select_revit_instance("2027") == {"selected": "2027", "port": 48885}
     assert main._base_url() == "http://127.0.0.1:48885/revit_mcp"
     main.select_revit_instance("default")
-    assert main._base_url() == main.BASE_URL
+    assert main._base_url() == main.BASE_URL  # two running: back to the default port
 
 
 def test_select_rejects_bad_or_missing_version(two_revits, monkeypatch):
