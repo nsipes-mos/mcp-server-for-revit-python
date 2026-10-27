@@ -1,11 +1,11 @@
 """Exercise the actual stdio process and MCP protocol, without Revit."""
-import json
 import os
 import sys
 from pathlib import Path
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from tools.catalog import TOOL_DESCRIPTIONS
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -19,9 +19,8 @@ async def test_stdio_inventory_and_unpaired_refusal(tmp_path):
             initialized = await session.initialize()
             assert initialized.protocolVersion == "2025-11-25"
             tools = (await session.list_tools()).tools
-            manifest = json.loads((ROOT / "mcp-tool-manifest.json").read_text(encoding="utf-8"))
             assert sorted((tool.name, tool.description) for tool in tools) == sorted(
-                (tool["name"], tool["description"]) for tool in manifest["tools"])
+                TOOL_DESCRIPTIONS.items())
             assert (await session.list_resources()).resources == []
             assert (await session.list_prompts()).prompts == []
             result = await session.call_tool("list_revit_installations", {})

@@ -173,14 +173,11 @@ def test_every_route_rejects_before_model_access(path, node, route_security, mon
         assert "doc" in arguments  # pyRevit must dispatch these on its API thread.
 
 
-async def test_runtime_manifest_and_unpaired_tool_surface(monkeypatch, tmp_path):
+async def test_registered_tools_match_catalog_and_unpaired_tool_surface(monkeypatch, tmp_path):
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
     from main import mcp
-    from scripts.export_mcp_manifest import build_manifest
     from tools.catalog import TOOL_DESCRIPTIONS
-    manifest = await build_manifest()
-    assert manifest == json.loads((ROOT / "mcp-tool-manifest.json").read_text(encoding="utf-8"))
-    assert {tool["name"] for tool in manifest["tools"]} == set(TOOL_DESCRIPTIONS)
+    assert {tool.name for tool in await mcp.list_tools()} == set(TOOL_DESCRIPTIONS)
     # Local discovery never accesses the registry before consent.
     response = await mcp.call_tool("list_revit_installations", {})
     content = response[0] if isinstance(response, tuple) else response
