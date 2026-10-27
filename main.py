@@ -117,9 +117,16 @@ def _version_port(version):
 def _base_url():
     """Routes URL for the selected Revit; re-resolved on every call so a
     restarted Revit that came up on a different port is picked up."""
-    if not _selected_version or "REVIT_PORT" in os.environ:
+    if "REVIT_PORT" in os.environ:
         return BASE_URL
-    return _routes_url(_version_port(_selected_version))
+    if _selected_version:
+        return _routes_url(_version_port(_selected_version))
+    # Nothing chosen: a lone running Revit is unambiguous; otherwise keep the
+    # default port (the first Revit started).
+    instances = scan_revit_instances()
+    if len(instances) == 1:
+        return _routes_url(instances[0]["port"])
+    return BASE_URL
 
 
 async def list_revit_instances():

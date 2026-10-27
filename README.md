@@ -128,7 +128,7 @@ They never conflict because they serve different roles, speak different protocol
 | `search_modules` | 🔄 Pending | Integration | Search for available modules/addins |
 | `use_module` | 🔄 Pending | Integration | Execute functionality from external modules |
 
-**Running several Revit versions:** each running Revit listens on its own pyRevit Routes port (2026 on 48884 and 2027 on 48885, for example, depending on start order). Set `REVIT_VERSION=2027` in the connector's `env` to target that version by default, or call `select_revit_instance` at runtime. The port is found from the running `Revit.exe` processes, so start order doesn't matter. An explicit `REVIT_PORT` overrides both.
+**Running several Revit versions:** each running Revit listens on its own pyRevit Routes port (2026 on 48884 and 2027 on 48885, for example, depending on start order). Set `REVIT_VERSION=2027` in the connector's `env` to target that version by default, or call `select_revit_instance` at runtime. The port is found from the running `Revit.exe` processes, so start order doesn't matter. An explicit `REVIT_PORT` overrides both. With nothing selected, a lone running Revit is used automatically; with several running, calls go to the default port (48884) until you choose. In Claude Code, the project's `SessionStart` hook reports the running versions and `/revit YYYY` selects one.
 
 
 ![Claude listing model elements in the Desktop interface](images/list_model_tool.png)

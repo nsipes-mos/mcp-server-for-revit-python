@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --frozen --directory \"$CLAUDE_PROJECT_DIR\" python scripts/session_start.py",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
