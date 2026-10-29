@@ -10,8 +10,9 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 PANEL = ROOT / "PyMoseley.tab" / "3File.panel"
-SAVE_ALL = PANEL / "SaveAll.pushbutton" / "script.py"
-OPEN_TEMPLATES = PANEL / "OpenTemplates.pushbutton" / "script.py"
+SAVE_ALL = PANEL / "2SaveAll.pushbutton" / "script.py"
+OPEN_TEMPLATES = PANEL / "1OpenTemplates.pushbutton" / "script.py"
+CLOSE_ALL = PANEL / "3CloseAll.pushbutton" / "script.py"
 STRING = "String"
 TODAY = datetime.date.today().strftime("%Y-%m-%d")
 
@@ -38,6 +39,27 @@ class FakeProgressBar:
 
     def __exit__(self, *exc):
         return False
+
+
+class FakeEvent:
+    """A .NET-style event: supports += and -=."""
+
+    def __init__(self):
+        self.handlers = []
+
+    def __iadd__(self, handler):
+        self.handlers.append(handler)
+        return self
+
+    def __isub__(self, handler):
+        self.handlers.remove(handler)
+        return self
+
+    def raise_dialog(self, **args):
+        event = SimpleNamespace(OverrideResult=Mock(), **args)
+        for handler in list(self.handlers):
+            handler(None, event)
+        return event
 
 
 class FakeTransaction:
@@ -81,18 +103,26 @@ def revit(monkeypatch):
     alert = Mock()
     forms = SimpleNamespace(alert=alert, ProgressBar=FakeProgressBar)
     uiapp = SimpleNamespace(Application=SimpleNamespace(Documents=[]),
-                            OpenAndActivateDocument=Mock())
+                            OpenAndActivateDocument=Mock(), ActiveUIDocument=None,
+                            PostCommand=Mock(), DialogBoxShowing=FakeEvent())
     host_app = SimpleNamespace(uiapp=uiapp, version="2027")
     pyrevit = ModuleType("pyrevit")
     pyrevit.forms, pyrevit.HOST_APP = forms, host_app
     db = ModuleType("Autodesk.Revit.DB")
     db.StorageType = SimpleNamespace(String=STRING)
     db.Transaction = FakeTransaction
+    ui = ModuleType("Autodesk.Revit.UI")
+    ui.PostableCommand = SimpleNamespace(Close="close")
+    ui.RevitCommandId = SimpleNamespace(LookupPostableCommandId=lambda command: "id:" + command)
+    answer_prompt = Mock(return_value="handler")
+    document = ModuleType("revit_mcp.document")
+    document._answer_next_save_prompt = answer_prompt
     for name, module in (("pyrevit", pyrevit), ("Autodesk", ModuleType("Autodesk")),
                          ("Autodesk.Revit", ModuleType("Autodesk.Revit")),
-                         ("Autodesk.Revit.DB", db)):
+                         ("Autodesk.Revit.DB", db), ("Autodesk.Revit.UI", ui),
+                         ("revit_mcp.document", document)):
         monkeypatch.setitem(sys.modules, name, module)
-    return SimpleNamespace(alert=alert, uiapp=uiapp, host_app=host_app,
+    return SimpleNamespace(alert=alert, uiapp=uiapp, host_app=host_app, answer_prompt=answer_prompt,
                            message=lambda: alert.call_args.args[0])
 
 
@@ -277,5 +307,122 @@ def test_open_templates_cancel_lists_unopened_files(revit, template_dir):
 
 
 def test_open_templates_is_hidden_before_revit_2026():
-    bundle = (PANEL / "OpenTemplates.pushbutton" / "bundle.yaml").read_text()
+    bundle = (PANEL / "1OpenTemplates.pushbutton" / "bundle.yaml").read_text()
     assert "min_revit_version: 2026" in bundle
+
+
+def test_open_templates_is_available_with_no_open_document():
+    bundle = (PANEL / "1OpenTemplates.pushbutton" / "bundle.yaml").read_text()
+    assert "context: zero-doc" in bundle
+
+
+# --- Close All --------------------------------------------------------------
+
+def make_closable(title, modified=False, linked=False, close_error=None):
+    doc = make_doc(title, modified=modified, linked=linked)
+    doc.Close = Mock(side_effect=close_error)
+    return doc
+
+
+def test_close_all_with_no_documents(revit):
+    run(CLOSE_ALL)
+    assert "No open documents" in revit.message()
+    revit.uiapp.PostCommand.assert_not_called()
+
+
+def test_close_all_closes_background_documents_and_posts_close_for_the_active_one(revit):
+    active, other, linked = make_closable("Active"), make_closable("Other"), make_closable("Link", linked=True)
+    revit.uiapp.Application.Documents = [other, active, linked]
+    revit.uiapp.ActiveUIDocument = SimpleNamespace(Document=active)
+    run(CLOSE_ALL)
+    other.Close.assert_called_once_with(False)
+    active.Close.assert_not_called()
+    linked.Close.assert_not_called()
+    revit.uiapp.PostCommand.assert_called_once_with("id:close")
+    revit.alert.assert_not_called()
+    revit.answer_prompt.assert_not_called()
+
+
+def test_close_all_asks_before_discarding_unsaved_changes(revit):
+    dirty, clean = make_closable("Dirty", modified=True), make_closable("Clean")
+    revit.uiapp.Application.Documents = [dirty, clean]
+    revit.alert.return_value = False
+    run(CLOSE_ALL)
+    assert "Dirty" in revit.message() and "Clean" not in revit.message()
+    dirty.Close.assert_not_called()
+    clean.Close.assert_not_called()
+    revit.uiapp.PostCommand.assert_not_called()
+
+
+def test_close_all_discards_after_confirmation_and_answers_the_active_save_prompt(revit):
+    active, other = make_closable("Active", modified=True), make_closable("Other", modified=True)
+    revit.uiapp.Application.Documents = [active, other]
+    revit.uiapp.ActiveUIDocument = SimpleNamespace(Document=active)
+    revit.alert.return_value = True
+    run(CLOSE_ALL)
+    other.Close.assert_called_once_with(False)
+    revit.answer_prompt.assert_called_once_with(revit.uiapp, 7, "Active")
+    revit.uiapp.PostCommand.assert_called_once_with("id:close")
+
+
+def test_close_all_reports_failures_and_continues(revit):
+    stuck = make_closable("Stuck", close_error=RuntimeError("in use"))
+    other = make_closable("Other")
+    revit.uiapp.Application.Documents = [stuck, other]
+    run(CLOSE_ALL)
+    other.Close.assert_called_once_with(False)
+    assert "Stuck: in use" in revit.message()
+
+
+# --- Open Templates: automatic dialog answers --------------------------------
+
+def test_open_templates_answers_yes_to_dialogs_and_reports_them(revit, template_dir):
+    template_dir("2027")
+    events = []
+
+    def opener(path):
+        if "Struc" in path:
+            events.append(revit.uiapp.DialogBoxShowing.raise_dialog(
+                DialogId="TaskDialog_Upgrade", Message="Upgrade this file?\nContinue"))
+    revit.uiapp.OpenAndActivateDocument.side_effect = opener
+    run(OPEN_TEMPLATES)
+    events[0].OverrideResult.assert_called_once_with(6)
+    assert "Dialogs answered automatically" in revit.message()
+    assert "Struc 2027.rte: TaskDialog_Upgrade [Yes] Upgrade this file? Continue" in revit.message()
+
+
+def test_open_templates_falls_back_to_ok_when_yes_is_rejected(revit, template_dir):
+    template_dir("2027")
+    events = []
+
+    def opener(path):
+        if "PlumbFire" in path:
+            event = revit.uiapp.DialogBoxShowing
+            args = SimpleNamespace(DialogId="Info", Message="Done",
+                                   OverrideResult=Mock(side_effect=[ValueError("no yes button"), None]))
+            for handler in list(event.handlers):
+                handler(None, args)
+            events.append(args)
+    revit.uiapp.OpenAndActivateDocument.side_effect = opener
+    run(OPEN_TEMPLATES)
+    assert [call.args[0] for call in events[0].OverrideResult.call_args_list] == [6, 1]
+    assert "[OK]" in revit.message()
+
+
+def test_open_templates_detaches_dialog_handler_afterwards(revit, template_dir):
+    template_dir("2027")
+    run(OPEN_TEMPLATES)
+    assert revit.uiapp.DialogBoxShowing.handlers == []
+    assert "Dialogs answered" not in revit.message()
+
+
+def test_open_templates_detaches_dialog_handler_even_when_opening_crashes(revit, template_dir):
+    template_dir("2027")
+    FakeProgressBar.__enter__ = lambda self: (_ for _ in ()).throw(RuntimeError("ui broke"))
+    try:
+        with pytest.raises(RuntimeError):
+            run(OPEN_TEMPLATES)
+    finally:
+        del FakeProgressBar.__enter__
+        FakeProgressBar.__enter__ = lambda self: self
+    assert revit.uiapp.DialogBoxShowing.handlers == []
